@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        async function hmac() {
+            const text = 'Hello world, mac was here'
+            const secret = 'Secret used to sign hash'
+
+            const encoder = new TextEncoder()
+
+            const key = await crypto.subtle.importKey("raw", encoder.encode(secret), {name: "HMAC", hash: {name: "SHA-256"}}, false, ["sign", "verify"])
+            
+            const hash = await crypto.subtle.sign({name: "HMAC"}, key, encoder.encode(text))
+
+            const b64 = btoa(String.fromCharCode(...new Uint8Array(hash)));
+
+            console.log(b64)
+            window.document.body.innerHTML += b64
+        }
+
+        hmac()
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<script>
+    async function encrypt() {
+        const encryptedBase64String = "ZVgZvbGPdrNB9gi4KiON/Hm2HdmflslQ5JKFARM6+fFF3kKcxnrotO4uDyonTmuQr2jgY1v7nbb5VhC9ar25HWEs/Fp+knCsxt3JO2VH4M/VkEKks1sfVrfnlFsEFS32QCk7yAs5WoXlzONvEL5GzG7zrV0Qgpuw8I5B5zcRwlCFfM4nPw/1GJ2JEc4JuAcnukfnKbbamrOu3weUuXsFHY76SzqAeJczyrvKrDpyXIwKpYlXPrfDcFOc1H0ggPyxQCghQejv51Md7V4AG1IQYva5yLXZ7pFjZv3Woeq27zWeSki5lH3Gj+z70Mns4UTnBWwD7aWPsufSWtOvrOQMGg==";
+        
+        const privateKeyPem = `-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCw6Ji/dBSYjJn4
+rriNpotrm55zTGn+0Hj5G68BgL9Nc+OWgfpqflFNAlpxRfJ3dXLuMIfQAvzSnGBC
+GamtDPz5oJmwHbLJW8xbCIqpE/Ed6SLpIpd9ZNBaNSHc4nvHJzV23nj/Uwq2Y7rJ
+splc5vi+kzcMrDeS8by6yDLRdiGdOmwIy75tr1hIjq4RzOCVnBP6mdcHIi79ipML
+suQz7JlN4QwuNbW0BFtU7Rlc9qb8KjOTAXfEccIkk5A7G4Grho/qdPaHGihO1p86
+2+z67mmqeZATeBtrUVM1rAVmpohglEJK/cNSkZyVqDg3G0i84OLXN9StaDMxmPjQ
+/OsIJlivAgMBAAECggEAPLr8hOzyjRPnX4mLbYU4423+zRH0aTdj8BBi2Z87DPm1
+rVtdfeVzP36JUc1zWTMGi2I5nV0JMbvhB5ALwY5t4bwSRnVLhPhwhOe/wh9IbL41
+79aiLrfHFtCamVteppV9MxtYaj41tTszSj53i3728WVURpNwWI+H/I7xcxqcm356
+UtNzdt7ATa2oZbRyE/1kLmWjuD4Er8DSg18wNlgH9PKHF3pA/XnEv8sLrz7smn8I
+xXao7UIJxur0zF7MRE6fMWeCv6hO+RuUHB/O9dlx+kH3bb4wxE1GwDm05v0W2nd+
+bfZ8sdxZ+/YcMcyc8DM7gNanP9rtgnB1BCgeTirEIQKBgQDkSM91Uedy0TgmXlyA
+h92qcY7a7f5y9LDPGScDD5ey7gwJRsIqHfOcw7Y/M3Hq0oTgQ2LbDGegXDqDR+2r
+1r40fjTXjtdrXQycT4g63K1lKzMmlk0btTAceVXpg/g+PrGWfYUm5PYHtOiSuDFp
+jQYY2stxsgO7QbWpZx20gj2K2QKBgQDGYwAmrDKvLzg9J4QKTFVLBRLhXAEcEvu9
+TM5tZvaLJp0vwl0rUyBxz5haAs0JnQISJoDLmbcrN1QGPn0MEprY/7YprOAlIqSy
+qBobVJJa6Twm51BK8UDhYK+3JwtwKlMVVfAahiDlr8AfYumc9AARvWfnBAP7zTqA
+LRLSaMR6xwKBgGHyV4jX3n1mBTh5Lik7okEaPhfzG0SJdj81ZIasrwLnniRwxqg5
+d6fgVRai5RLCxp5Oa2De3qtwRu7C8tfS6IMvT07Zi9YV824xtZrDymXo9iZtQKJN
+yFm/Obxaki1qytlt+65neKRv24XwH8tQ5bfOUJH0tiMnG2GWy6kCZJNpAoGAOp6k
+O8kkDNmyD3furzBQ/6LXKloKReZiFlRspq0G6qUVSzhuWU/txVNnHCm5tj57jytr
+YT3hftaRcGrkfj29HaOpivT3ImHzMoszc6HwwQYr7P7qncpdtnrgUQkrexA2jpZf
+JSc+7z+YUG3kw6jhoFxMKFnqZ2wD/j3TUvL8I58CgYEAgyztgdJrqKwYDYG4JYmu
+WHUORZnzwzNxJAUKOr0beSWouIElt6soZJqCb/M2birp+p6/Ze4Z+5fB0WWfSIUD
+waa59onCumvczZfZM661Y6Ro1jOj9uYu683qA5V0z0SbSWyCm2qCT4kH5jh4fFUQ
+pNL35mReeqwk03IuaAu/664=
+-----END PRIVATE KEY-----
+`;
+        
+        const privateKey = await crypto.subtle.importKey(
+            "pkcs8",
+            Uint8Array.from(atob(privateKeyPem.split('\n').filter(line => !line.startsWith('-----')).join('')), c => c.charCodeAt(0)), // encoder.encode(publicKeyPem),
+            {name: "RSA-OAEP", hash: {name: "SHA-1"}},
+            false,
+            ["decrypt"]
+        );
+
+        const decryptedBytes = await crypto.subtle.decrypt({name: "RSA-OAEP"}, privateKey, Uint8Array.from(atob(encryptedBase64String), c => c.charCodeAt(0)))
+        const decoder = new TextDecoder('utf8')
+        const text = decoder.decode(decryptedBytes)
+        console.log(text)
+        document.write(text)
+    }
+    encrypt().catch(error => document.write(error))
+</script>

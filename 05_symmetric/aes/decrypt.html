@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        // https://gist.github.com/pedrouid/b4056fd1f754918ddae86b32cf7d803e
+        // https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/decrypt
+
+        async function decrypt() {
+            const encrypted = 'zduKiEPpq40lxlzX8bWSEqGSVHL0CZKA/xs0zODqpxM='
+            const key = 'must_be_exactly_32_chars_long_00'
+            const iv = '16_random_chars_'
+
+            const encryptedBytes = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0))
+
+            const decoder = new TextDecoder('utf8')
+            const encoder = new TextEncoder()
+            const keyBytes = encoder.encode(key)
+            const ivBytes = encoder.encode(iv)
+
+            const secret = await crypto.subtle.importKey("raw", keyBytes, {name: 'AES-CBC', length: 256}, false, ["encrypt", "decrypt"])
+            const decrypted = await crypto.subtle.decrypt({name: "AES-CBC", iv: ivBytes}, secret, encryptedBytes)
+
+            console.log(decoder.decode(decrypted))
+            window.document.body.innerHTML += decoder.decode(decrypted)
+        }
+
+        decrypt()
+    </script>
+</body>
+</html>

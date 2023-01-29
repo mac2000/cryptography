@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        async function keys() {
+            const {publicKey, privateKey} = await crypto.subtle.generateKey(
+                {
+                    name: "RSA-OAEP",
+                    modulusLength: 2048,
+                    publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+                    hash: {name: "SHA-256"},
+                },
+                true,
+                ["encrypt", "decrypt"]
+            )
+
+            let privatePem = await crypto.subtle.exportKey('pkcs8', privateKey)
+            privatePem = `-----BEGIN PRIVATE KEY-----\n` + btoa(String.fromCharCode(...new Uint8Array(privatePem))).match(/.{1,64}/g).join('\n') + `\n-----END PRIVATE KEY-----`;
+            
+            console.log(privatePem)
+            document.body.innerHTML += `<p><b>private.pem</b></p><pre><code>${privatePem}</code></pre>`
+
+
+            let publicPem = await crypto.subtle.exportKey('spki', publicKey);
+            publicPem = `-----BEGIN PUBLIC KEY-----\n` + btoa(String.fromCharCode(...new Uint8Array(publicPem))).match(/.{1,64}/g).join('\n') + `\n-----END PUBLIC KEY-----`;
+
+            console.log(publicPem)
+            document.body.innerHTML += `<p><b>public.pem</b></p><pre><code>${publicPem}</code></pre>`
+
+            
+        }
+
+        keys()
+    </script>
+</body>
+</html>

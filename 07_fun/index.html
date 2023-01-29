@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfer</title>
+</head>
+<body>
+    <h1>Transfer Demo</h1>
+    <p>In this demo we are going to utilize multiple cryptograpy algorythimgs to transfer secret between the client and server</p>
+
+    <ul>
+        <li>in general if data is small - RSA might be used otherwise we need AES</li>
+        <li>we do not want to share/store any secrets, especially AES</li>
+        <li>participants exchanging their RSA public keys which then used to encrypt AES key</li>
+        <li>the data itself is encrypted with AES</li>
+    </ul>
+
+    <p>Before doing anything else we need create RSA keys</p>
+
+    <h2>Client RSA keys</h2>
+
+    <p><b>private.pem</b></p>
+    <pre><code id="privatePem"></code></pre>
+
+    <p><b>public.pem</b></p>
+    <pre><code id="publicPem"></code></pre>
+
+    <h2>Server public.pem</h2>
+
+    <p>Now we need server public key</p>
+    <p>Note how cool is that, keys are not stored anywhere which makes followup communication extremely safe</p>
+
+    <p><b>public.pem</b></p>
+    <pre><code id="serverPublicPem"></code></pre>
+
+    <h2>Transmit</h2>
+
+    <p>Now the fun part</p>
+
+    <p>Here is our secret data we want to transfer</p>
+    <p><textarea id="text" cols="30" rows="5">Hello world, mac was here</textarea></p>
+    <p>Technically we may just encrypt it with public key from server and send it.</p>
+    <p>But if our message is big (bigger that key size) it won't work.</p>
+    <p>That's exactly why we are dealing with keys.</p>
+    <p>We are going to:</p>
+    <ul>
+        <li>encrypt our data with AES</li>
+        <li>encrypt AES key with servers public key</li>
+        <li>send it all to the server</li>
+    </ul>
+    <p>On the server side:</p>
+    <ul>
+        <li>decrypt received key</li>
+        <li>decrypt AES payload</li>
+        <li>respond</li>
+    </ul>
+
+    <p><input id="transfer" type="button" value="Transfer" /></p>
+
+    <div id="part2" style="display:none">
+
+    <h2>AES</h2>
+    <p>For aes ancryption we need key and initialization vector (iv)</p>
+    <p>Both are arrays of random bytes</p>
+    <p>We are encoding them to base64 just for us to print them</p>
+    <p>key: <code id="key"></code></p>
+    <p>iv: <code id="iv"></code></p>
+    <p>Note that key must be exactly 32 bytes and iv - 16</p>
+    <p>Having our key and iv we may encryp our text</p>
+    <p><code id="aes"></code></p>
+    <p>Once again encoding it in base64</p>
+
+    <h2>RSA encrypt</h2>
+    <p>Now we may encryp all that with server public key</p>
+    <p><b>key:</b></p>
+    <p><code id="keyenc" style="word-break: break-all"></code></p>
+
+    <h2>Request payload</h2>
+    <p>So our request payload will be:</p>
+    <pre><code id="payloadJson"></code></pre>
+    <p>Notes:</p>
+    <ul>
+        <li>JSON is used just for convenience</li>
+        <li>because of JSON we need to represent bytes somehow, so we are using base64</li>
+        <li>IV is not a secret so passed as is</li>
+        <li>key encrypted by servers public key, so only it can decrypt it</li>
+        <li>text is encrypted with AES</li>
+        <li>we are sending our public key as well, so server may encrypt its response</li>
+        <li>look at server logs for details of what is going on there</li>
+    </ul>
+
+    <h2>Response payload</h2>
+    <p>So our server did responded to us with following payload:</p>
+    <pre><code id="responseJson"></code></pre>
+    <p>Notes:</p>
+    <ul>
+        <li>JSON and base64 used as well</li>
+        <li>Server send us encrypted text</li>
+        <li>Text was encrypted with a key</li>
+        <li>Key was encrypted with our public key</li>
+        <li>That means that only we can decrypt the text</li>
+    </ul>
+
+    <p>key: <code id="decryptedKey"></code></p>
+
+    
+    <h2>Response Text</h2>
+    <p>Having that key and iv we can decrypt the text</p>
+    <p><b><code id="decryptedText"></code></b></p>
+
+    <p>Once again note that:</p>
+    <ul>
+        <li>rsa keys are generated on the fly, we are not storing them anywhere</li>
+        <li>aes key and iv generated each time, also not stored anywhere</li>
+        <li>with such approach it should be quite a difficult task to crack this</li>
+        <li>this is only demo, indeed we may store rsa keys, we may even hardcode iv and so on, but the real fun was to make all this dynamic</li>
+    </ul>
+
+    <h2>TODO</h2>
+    <p>In both, request and response we may add signature as well which will make it impossible to be in between</p>
+
+    </div>
+
+    <script type="module">
+        function base64encode(input) {
+            return btoa(String.fromCharCode(...new Uint8Array(input)))
+        }
+
+        function base64decode(input) {
+            return Uint8Array.from(atob(input), c => c.charCodeAt(0))
+        }
+
+        async function generateKeys() {
+            const {publicKey, privateKey} = await crypto.subtle.generateKey(
+                {
+                    name: "RSA-OAEP",
+                    modulusLength: 2048,
+                    publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+                    hash: {name: "SHA-1"},
+                },
+                true,
+                ["encrypt", "decrypt"]
+            )
+            return {publicKey, privateKey}
+        }
+
+        async function exportPKCS8PrivateKeyPem(privateKey) {
+            let privatePem = await crypto.subtle.exportKey('pkcs8', privateKey)
+            return `-----BEGIN PRIVATE KEY-----\n` + base64encode(privatePem).match(/.{1,64}/g).join('\n') + `\n-----END PRIVATE KEY-----`;
+        }
+
+        async function exportSPKIPublicKeyPem(publicKey) {
+            const publicPem = await crypto.subtle.exportKey('spki', publicKey);
+            return `-----BEGIN PUBLIC KEY-----\n` + base64encode(publicPem).match(/.{1,64}/g).join('\n') + `\n-----END PUBLIC KEY-----`;
+        }
+
+        async function importSPKIPublicKeyPem(publicKey) {
+            const publicKeyBase64SingleLineWithoutHeaders = publicKey.split('\n').filter(line => !line.startsWith('-----')).join('')
+            return await crypto.subtle.importKey(
+                "spki",
+                base64decode(publicKeyBase64SingleLineWithoutHeaders),
+                {name: "RSA-OAEP", hash: {name: "SHA-1"}},
+                false,
+                ["encrypt"]
+            )
+        }
+        
+        console.log('generating RSA keys')
+        const {publicKey, privateKey} = await generateKeys()
+        const privatePem = await exportPKCS8PrivateKeyPem(privateKey)
+        const publicPem = await exportSPKIPublicKeyPem(publicKey)
+        document.getElementById('privatePem').innerHTML = privatePem
+        document.getElementById('publicPem').innerHTML = publicPem
+
+
+        console.log('Retrieving server public key')
+        const serverPublicKeyPem = await fetch('/public').then(r => r.text())
+        document.getElementById('serverPublicPem').innerHTML = serverPublicKeyPem
+        const serverPublicKey = await importSPKIPublicKeyPem(serverPublicKeyPem)
+
+        async function transfer() {
+            console.log('Starting transfer dance')
+
+            const text = document.getElementById('text').value
+            console.log('the text is: ' + text)
+
+            console.log('Generating AES key and iv bytes')
+            const key = crypto.getRandomValues(new Uint8Array(32))
+            const iv = crypto.getRandomValues(new Uint8Array(16))
+            document.getElementById('key').innerHTML = base64encode(key)
+            document.getElementById('iv').innerHTML = base64encode(iv)
+            
+
+            console.log('Encrypting text')
+            const secret = await crypto.subtle.importKey("raw", key, {name: 'AES-CBC', length: 256}, false, ["encrypt", "decrypt"])
+            const encrypted = await crypto.subtle.encrypt({name: "AES-CBC", iv: iv}, secret, new TextEncoder().encode(text))
+            document.getElementById('aes').innerHTML = base64encode(encrypted)
+
+            console.log('Encrypting results with server public key')
+            const keyenc = await crypto.subtle.encrypt({name: "RSA-OAEP"}, serverPublicKey, key)
+            document.getElementById('keyenc').innerHTML = base64encode(keyenc)
+
+            console.log('Preparing payload')
+            const payload = {
+                key: base64encode(keyenc),
+                iv: base64encode(iv),
+                text: base64encode(encrypted),
+                publicKey: publicPem
+            }
+            document.getElementById('payloadJson').innerHTML = JSON.stringify(payload, null, 4)
+
+            console.log('Sending request')
+            const response = await fetch('/transmit', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)}).then(r => r.json())
+            document.getElementById('responseJson').innerHTML = JSON.stringify(response, null, 4)
+
+            console.log('Decrypting key from response')
+            const decryptedKey = await crypto.subtle.decrypt({name: "RSA-OAEP"}, privateKey, base64decode(response.key))
+            document.getElementById('decryptedKey').innerHTML = base64encode(decryptedKey)
+            
+            console.log('Decrypting text from response')
+            const decryptor = await crypto.subtle.importKey("raw", decryptedKey, {name: 'AES-CBC', length: 256}, false, ["encrypt", "decrypt"])
+            const decrypted = await crypto.subtle.decrypt({name: "AES-CBC", iv: base64decode(response.iv)}, decryptor, base64decode(response.text))
+            document.getElementById('decryptedText').innerHTML = new TextDecoder('utf8').decode(decrypted)
+
+
+            console.log('Display results')
+            document.getElementById('part2').style.display = 'block'
+        }
+        document.getElementById('transfer').addEventListener('click', transfer)
+        transfer().catch(console.log)
+
+
+        
+
+        
+    </script>
+</body>
+</html>

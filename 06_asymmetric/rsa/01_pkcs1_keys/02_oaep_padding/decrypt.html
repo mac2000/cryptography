@@ -1,0 +1,58 @@
+<script>
+    async function encrypt() {
+        const encryptedBase64String = "n5CXDosoaoNFy81ZEJK0ozC7tT4iLEv2iEcJZT9cp7UQmm6btXwStO/Mb1pbLR1Y6rgTMIfZUS72fGgCMwpNBjPqmfRk1x7ndfzZXyNSREurMDf80Cqvtiyz+Issn4rh26eonOPZ1l+AHhHoZNQAMxOp5Mf230Zyt2aJNFvNZxNixz+/W88F8NnXxbFelgtHnAivYV6khy5yH2GiGsli7jrNWotbP/xrso+LjqKFc1V07tIBdt9Xre+G2xDoFULvcXpXmGs0tRj6OVUXA6C/UqgYNH/wDbrY+eP+ACTMl9kywz/WdiFDgvt14r4w0S3g+wy9KBDMjAC5n8atX30OAg==";
+        
+        /*
+        The header -----BEGIN RSA PRIVATE KEY----- in the PEM file is reserved to PKCS#1 keys, but WebCryptoApi does not support pkcs1, so you need to convert the key from PKCS#1 to PKCS#8 using a tool like openssl.
+        
+        openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in private.pem -out private.pkcs8.pem
+        openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in private.pem | pbcopy
+        */
+        
+        const privateKeyPem = `-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDDUb6y4g6QnpRb
+RFZggyIngUpKIkUWnioo4xdirUKwGCRv5G3PKKNj5v1AUmYEwJ4yybiqfRlU9xVa
+yq/6gxXsWYgTEa+lSBcVLHUqFAqcS17rgYJlvJ5SWHxymJN4yRMtxpBPcJwd9Gru
+uNnKGhrpyRLPpmuHuyYediPIDvvVGCeNv2hDEw1gXr9mhACtVsklx6uZLaxai6lC
+v0baUVsPKssF+rQS7GhOgakyPIW5xwB7TO6gXSyX+GFnjBxSZNTKlka4k4Xg8zXj
+7xinUzlF/JR3NwrGfGvQwV+bDRg5GJR/uTCE6o6ty24bHMNjN++fGgYCoGbgdI5i
+8PwlBSEVAgMBAAECggEAOEVXvG+WJKIbOcQRYpLFBz6faYZAA0kj+k2akio6eUMr
+VDUqUbFyiTimI57Zl2rq6NTm5+9MmgbpVxPn6TNU4JfWtS+2O9buF4KMasgFWov4
+V78jEy5pKm4lxFoiunyrktePAeP+hj7Bg+8rh6dHs6zjR4G5nwwS6lm860kt0nE3
+BbjRx5IiZn+gZIqX52J9OvlJTxf5tXI4FtjnJvadpmI/fghp8Nl3r75JzMYSQTKV
+KyVtNhpdJb2j4h+6eRYEToS2UvgVugxmpHjQ2c3z8RarqeZGCuv/8hhepN/T1kdk
+ltkGtY2W5Ma9e94mzILDVYeuIBexfuLPc2+8ViTO7QKBgQDru7ReC/jKpWMsVGD1
+dHMNyVt2N2VIgkLzvK0oNODLJNRsgARFONLyy7L9foXV6nDtmtXEFhebGAHgj/QH
+MOMx3HrQM9SpcZ8qWvoc9RAQfIiZGs3ztPYIpA1K/PGbDuQpEMhf1XKbzDMcpFZ9
+LNbi/1pi3+bdQalLkWUtYjDcOwKBgQDUHJA4IgifDlBDVJZ5yv3kQtSiEAVB3Hz4
+YVqr+6KH5vnqL8kQ9/apDtPNU5W5tDwaotHsMMN71PADiWgoiSfASnDsy2hOnC2t
+q6WwJydapC+KmZMAI2GM65c7Oqz9fuAIXvXWfoSXxqi1AMPu4tLH7qHhey7838a2
+3QAoOOwy7wKBgQCMpsd8ocoFJ18f8QyVB7EqVa0zwOO2uro18aqjZcGGk+gHAO8L
+WldLNM0MQTSbqTFOI+dOAxx8lntwQJQKwlmcw3+nwHUv0LJ2NCgtpO6714ItT/f4
+ZE20ZCXmSzvhF6Z89h2ISLQET3djrI5KS7m/YTrN6eg2tdnMU+k5he+/RwKBgFYD
+fzhEFNrrIwEqvBqHho2ZzEAr3vXmQ4c1c19qm24g7BdbaV3IL+4+ZQVOb9jujbD/
+dcEhxSPiJbJJdkN52vTPOxvLIHFARAW5JWdZeUv4aI771/CmaFiM8LbEBIKHgLHk
+UCy7AWnK1X8Q4GNu96q7ykl1eohw9lQRKo8lBiNhAoGAbURwg+J6UT7zr8sRiEZD
+i6vQqIsTNIEDcUbPndti+r7jOfFP4GI/YRBlAnZrr7E8eD1mE+wi5hscah3cF6ay
+yRNrfsu53hSuP/nYL5UexgAUGBLFytRkVwJaiRkFWe2JkqvtD7QuWxGKfoGBgBKV
+OGeeHshwWYOp2EohQmekC2A=
+-----END PRIVATE KEY-----
+
+`;
+        
+        const privateKey = await crypto.subtle.importKey(
+            "pkcs8",
+            Uint8Array.from(atob(privateKeyPem.split('\n').filter(line => !line.startsWith('-----')).join('')), c => c.charCodeAt(0)), // encoder.encode(publicKeyPem),
+            {name: "RSA-OAEP", hash: {name: "SHA-1"}},
+            false,
+            ["decrypt"]
+        );
+
+        const decryptedBytes = await crypto.subtle.decrypt({name: "RSA-OAEP"}, privateKey, Uint8Array.from(atob(encryptedBase64String), c => c.charCodeAt(0)))
+        const decoder = new TextDecoder('utf8')
+        const text = decoder.decode(decryptedBytes)
+        console.log(text)
+        document.write(text)
+    }
+    encrypt().catch(error => document.write(error))
+</script>

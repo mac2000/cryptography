@@ -1,0 +1,31 @@
+<script>
+    async function encrypt() {
+        const text = "Hello world, mac was here";
+        const publicKeyPem = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw1G+suIOkJ6UW0RWYIMi
+J4FKSiJFFp4qKOMXYq1CsBgkb+RtzyijY+b9QFJmBMCeMsm4qn0ZVPcVWsqv+oMV
+7FmIExGvpUgXFSx1KhQKnEte64GCZbyeUlh8cpiTeMkTLcaQT3CcHfRq7rjZyhoa
+6ckSz6Zrh7smHnYjyA771Rgnjb9oQxMNYF6/ZoQArVbJJcermS2sWoupQr9G2lFb
+DyrLBfq0EuxoToGpMjyFuccAe0zuoF0sl/hhZ4wcUmTUypZGuJOF4PM14+8Yp1M5
+RfyUdzcKxnxr0MFfmw0YORiUf7kwhOqOrctuGxzDYzfvnxoGAqBm4HSOYvD8JQUh
+FQIDAQAB
+-----END PUBLIC KEY-----
+`;
+        const encoder = new TextEncoder()
+        const publicKey = await crypto.subtle.importKey(
+            "spki",
+            Uint8Array.from(atob(publicKeyPem.split('\n').filter(line => !line.startsWith('-----')).join('')), c => c.charCodeAt(0)), // encoder.encode(publicKeyPem),
+            {name: "RSA-OAEP", hash: {name: "SHA-1"}},
+            false,
+            ["encrypt"]
+        );
+
+        const encryptedBytes = await crypto.subtle.encrypt({name: "RSA-OAEP"}, publicKey, encoder.encode(text))
+
+        const base64String = btoa(String.fromCharCode(...new Uint8Array(encryptedBytes)));
+
+        console.log(base64String)
+        document.write(base64String)
+    }
+    encrypt().catch(error => document.write(error))
+</script>
