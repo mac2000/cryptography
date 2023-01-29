@@ -33,6 +33,14 @@ Just go over directories, each has its own readme explaining whats going on
 
 Each folder has `demo.sh` with bunch of `docker run ...` commands which may be used to check results
 
+In first demo we should have an overall look and feel over this topics
+
+![demo1](01_demo/screenshot.png)
+
+And in second demo we will have some fun and combine different algorythms to make some crazy things
+
+![demo2](07_fun/screenshot.png)
+
 
 ## Test
 
