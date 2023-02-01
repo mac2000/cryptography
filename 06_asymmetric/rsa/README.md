@@ -81,3 +81,13 @@ Also there are samples for browser but they require some manual work, for them i
 ## Tests
 
 Each folder has `test.ps1` script to check that everything works as expected by iterating over all keys, encrypt, decrypt combinations
+
+## Other usages
+
+From given private key we may:
+
+- create as many public keys as we want for all this encryption
+- [create certificates for https](https://mac-blog.org.ua/openssl-ca-key-csr-crt)
+- [create signed certificates for https](https://mac-blog.org.ua/openssl-ca-key-csr-crt-san)
+- [create signed certificate inside kubernetes for user kubectl](https://mac-blog.org.ua/kubernetes-create-user-kubectl)
+- after conversion we may use it for ssh
